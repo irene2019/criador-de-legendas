@@ -239,12 +239,16 @@
 
   <div class="panel">
     <div class="panel-inner">
-      <label for="apiKey">Chave da API do Gemini</label>
+      <label for="apiKey">Chave da API da OpenRouter</label>
       <div class="key-row">
         <input type="password" id="apiKey" placeholder="Cole sua chave aqui" autocomplete="off">
         <button class="toggle-key" id="toggleKey" type="button">mostrar</button>
       </div>
-      <p class="hint">A chave só fica na memória desta página — não é salva em nenhum lugar. Gere a sua em <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a>.</p>
+      <p class="hint">A chave só fica na memória desta página — não é salva em nenhum lugar. Gere a sua em <a href="https://openrouter.ai/keys" target="_blank" rel="noopener">openrouter.ai/keys</a>.</p>
+
+      <label for="modelId" style="margin-top:16px;">Modelo</label>
+      <input type="text" id="modelId" value="google/gemini-2.5-flash" autocomplete="off">
+      <p class="hint">Precisa ser um modelo com suporte a imagem (visão). Veja as opções e os preços em <a href="https://openrouter.ai/models?modality=text%2Bimage-%3Etext" target="_blank" rel="noopener">openrouter.ai/models</a> — cole o nome exatamente como aparece lá, ex. <span style="font-family:'Courier Prime',monospace;">openai/gpt-4o-mini</span>.</p>
     </div>
   </div>
 
@@ -385,32 +389,31 @@ function fileToBase64(file) {
   });
 }
 
-const responseSchema = {
-  type: "OBJECT",
-  properties: {
-    instagram_caption: { type: "STRING" },
-    instagram_hashtags: { type: "ARRAY", items: { type: "STRING" } },
-    pinterest_title: { type: "STRING" },
-    pinterest_description: { type: "STRING" },
-    pinterest_keywords: { type: "ARRAY", items: { type: "STRING" } }
-  },
-  required: ["instagram_caption","instagram_hashtags","pinterest_title","pinterest_description","pinterest_keywords"]
-};
-
 const PROMPT = `Você é especialista em social media e SEO para imagens. Observe a imagem enviada e gere conteúdo em português do Brasil, pronto para publicar.
 
-Retorne:
+Responda SOMENTE com um objeto JSON válido, sem markdown, sem crases, sem texto antes ou depois, com exatamente estas chaves:
 - instagram_caption: uma legenda envolvente para Instagram (2 a 4 frases, tom natural, pode usar 1 emoji no máximo), sem incluir as hashtags dentro do texto.
-- instagram_hashtags: lista de 12 a 18 hashtags relevantes para a imagem (misture hashtags amplas e de nicho), cada uma já com o símbolo #, sem espaços.
+- instagram_hashtags: lista (array) de 12 a 18 hashtags relevantes para a imagem (misture hashtags amplas e de nicho), cada uma já com o símbolo #, sem espaços.
 - pinterest_title: título curto e otimizado para busca no Pinterest (até 100 caracteres), com a palavra-chave principal no início.
 - pinterest_description: descrição para Pinterest otimizada para SEO (200 a 500 caracteres), incluindo palavras-chave relevantes de forma natural, sem hashtags.
-- pinterest_keywords: lista de 8 a 12 palavras-chave/frases de busca relevantes para a imagem, sem #.
+- pinterest_keywords: lista (array) de 8 a 12 palavras-chave/frases de busca relevantes para a imagem, sem #.
 
 Baseie tudo no que você realmente vê na imagem: objetos, cores, cenário, estilo e possível uso do item ou tema retratado.`;
 
+function extractJson(text) {
+  let cleaned = text.trim();
+  cleaned = cleaned.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '');
+  const start = cleaned.indexOf('{');
+  const end = cleaned.lastIndexOf('}');
+  if (start !== -1 && end !== -1) cleaned = cleaned.slice(start, end + 1);
+  return JSON.parse(cleaned);
+}
+
 async function analyzeImage() {
   const apiKey = apiKeyInput.value.trim();
-  if (!apiKey) { showError('Cole sua chave da API do Gemini antes de analisar.'); return; }
+  const modelId = document.getElementById('modelId').value.trim();
+  if (!apiKey) { showError('Cole sua chave da API da OpenRouter antes de analisar.'); return; }
+  if (!modelId) { showError('Informe o modelo que quer usar.'); return; }
   if (!selectedFile) { showError('Escolha uma imagem primeiro.'); return; }
 
   hideError();
@@ -423,23 +426,26 @@ async function analyzeImage() {
     setStatus('enviando para análise…');
 
     const body = {
-      contents: [{
-        parts: [
-          { text: PROMPT },
-          { inline_data: { mime_type: selectedFile.type, data: base64 } }
-        ]
-      }],
-      generationConfig: {
-        responseMimeType: "application/json",
-        responseSchema: responseSchema
-      }
+      model: modelId,
+      response_format: { type: "json_object" },
+      messages: [
+        {
+          role: "user",
+          content: [
+            { type: "text", text: PROMPT },
+            { type: "image_url", image_url: { url: `data:${selectedFile.type};base64,${base64}` } }
+          ]
+        }
+      ]
     };
 
-    const resp = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent', {
+    const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-goog-api-key': apiKey
+        'Authorization': `Bearer ${apiKey}`,
+        'HTTP-Referer': window.location.href,
+        'X-Title': 'Ficha de Legenda'
       },
       body: JSON.stringify(body)
     });
@@ -448,17 +454,20 @@ async function analyzeImage() {
       const errBody = await resp.text();
       let detail = '';
       try { detail = JSON.parse(errBody).error?.message || ''; } catch(_) {}
-      if (resp.status === 400 || resp.status === 403) {
+      if (resp.status === 401 || resp.status === 403) {
         throw new Error('Chave da API recusada. Confira se ela foi colada corretamente.' + (detail ? ' (' + detail + ')' : ''));
       }
-      throw new Error('O Gemini não conseguiu processar a imagem.' + (detail ? ' Detalhe: ' + detail : ''));
+      if (resp.status === 404) {
+        throw new Error('Esse modelo não foi encontrado na OpenRouter. Confira o nome em openrouter.ai/models.');
+      }
+      throw new Error('O modelo não conseguiu processar a imagem.' + (detail ? ' Detalhe: ' + detail : ''));
     }
 
     const data = await resp.json();
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!text) throw new Error('A resposta veio vazia. Tente novamente.');
+    const text = data.choices?.[0]?.message?.content;
+    if (!text) throw new Error('A resposta veio vazia. Tente novamente ou troque de modelo.');
 
-    const parsed = JSON.parse(text);
+    const parsed = extractJson(text);
     renderResults(parsed);
     setStatus('');
   } catch (err) {
