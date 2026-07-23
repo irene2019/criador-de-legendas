@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ficha de Legenda</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400..700&family=Courier+Prime&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1b4b43;
+    --paper:#f2ead9;
+    --card:#fbf6ea;
+    --stamp:#a8322d;
+    --gold:#c98a2c;
+    --line:#cbb98f;
+    --ink-soft:#3d6a61;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    background-image:
+      radial-gradient(circle at 1px 1px, rgba(27,75,67,0.06) 1px, transparent 0);
+    background-size:22px 22px;
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    padding:32px 20px 60px;
+    min-height:100vh;
+  }
+  .wrap{max-width:760px;margin:0 auto;}
+  header{margin-bottom:28px;}
+  .eyebrow{
+    font-family:'Courier Prime',monospace;
+    font-size:12px;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color:var(--stamp);
+    margin:0 0 6px;
+  }
+  h1{
+    font-family:'Fraunces',serif;
+    font-weight:600;
+    font-size:clamp(32px,6vw,44px);
+    margin:0 0 8px;
+    line-height:1.05;
+  }
+  .sub{
+    font-size:15px;
+    color:var(--ink-soft);
+    max-width:480px;
+    line-height:1.5;
+    margin:0;
+  }
+  .panel{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:2px;
+    padding:22px;
+    margin-bottom:20px;
+    position:relative;
+  }
+  .panel::before{
+    content:"";
+    position:absolute;
+    left:0;top:14px;bottom:14px;
+    width:3px;
+    background:var(--gold);
+  }
+  .panel-inner{padding-left:12px;}
+  label{
+    display:block;
+    font-family:'Courier Prime',monospace;
+    font-size:11px;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+    margin-bottom:8px;
+  }
+  .key-row{display:flex;gap:8px;}
+  input[type="password"], input[type="text"]{
+    flex:1;
+    font-family:'Courier Prime',monospace;
+    font-size:14px;
+    padding:10px 12px;
+    border:1px solid var(--line);
+    border-radius:2px;
+    background:#fff;
+    color:var(--ink);
+  }
+  input:focus{outline:2px solid var(--gold);outline-offset:1px;}
+  .toggle-key{
+    background:transparent;
+    border:1px solid var(--line);
+    border-radius:2px;
+    font-family:'Inter',sans-serif;
+    font-size:12px;
+    padding:0 12px;
+    cursor:pointer;
+    color:var(--ink-soft);
+  }
+  .hint{font-size:12px;color:var(--ink-soft);margin-top:6px;line-height:1.4;}
+  .hint a{color:var(--stamp);}
+
+  .dropzone{
+    position:relative;
+    border:1.5px dashed var(--line);
+    border-radius:2px;
+    padding:34px 20px;
+    text-align:center;
+    cursor:pointer;
+    transition:background 0.15s;
+    background:repeating-linear-gradient(135deg, rgba(27,75,67,0.02) 0 10px, transparent 10px 20px);
+  }
+  .dropzone.drag{background:rgba(201,138,44,0.12);border-color:var(--gold);}
+  .dropzone .mark{position:absolute;width:12px;height:12px;}
+  .dropzone .mark::before,.dropzone .mark::after{content:"";position:absolute;background:var(--ink-soft);opacity:0.5;}
+  .mark.tl{top:6px;left:6px;} .mark.tr{top:6px;right:6px;} .mark.bl{bottom:6px;left:6px;} .mark.br{bottom:6px;right:6px;}
+  .mark::before{width:12px;height:1px;top:5px;left:0;}
+  .mark::after{width:1px;height:12px;left:5px;top:0;}
+  .dz-title{font-family:'Fraunces',serif;font-size:18px;margin:0 0 4px;}
+  .dz-sub{font-size:13px;color:var(--ink-soft);margin:0;}
+  #fileInput{display:none;}
+  .preview-wrap{margin-top:16px;display:none;align-items:center;gap:14px;}
+  #previewImg{width:84px;height:84px;object-fit:cover;border:1px solid var(--line);border-radius:2px;}
+  .fname{font-size:13px;color:var(--ink-soft);word-break:break-all;flex:1;}
+  .remove-btn{background:none;border:none;color:var(--stamp);font-family:'Courier Prime',monospace;font-size:12px;cursor:pointer;text-decoration:underline;}
+
+  .go-btn{
+    width:100%;
+    margin-top:18px;
+    background:var(--ink);
+    color:var(--paper);
+    border:none;
+    font-family:'Fraunces',serif;
+    font-size:17px;
+    padding:14px;
+    border-radius:2px;
+    cursor:pointer;
+    letter-spacing:0.01em;
+  }
+  .go-btn:disabled{opacity:0.45;cursor:not-allowed;}
+  .go-btn:not(:disabled):hover{background:var(--ink-soft);}
+
+  .status{
+    font-family:'Courier Prime',monospace;
+    font-size:13px;
+    color:var(--ink-soft);
+    margin-top:12px;
+    display:none;
+  }
+  .status.show{display:block;}
+  .error{
+    font-family:'Inter',sans-serif;
+    font-size:13px;
+    color:var(--stamp);
+    margin-top:12px;
+    display:none;
+    line-height:1.5;
+  }
+  .error.show{display:block;}
+
+  .results{display:none;margin-top:28px;}
+  .results.show{display:block;}
+  .card-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+  @media (max-width:640px){.card-grid{grid-template-columns:1fr;}}
+
+  .ficha{
+    background:var(--card);
+    border:1px solid var(--ink);
+    border-radius:2px;
+    padding:20px 18px 18px;
+    position:relative;
+    box-shadow:3px 3px 0 rgba(27,75,67,0.12);
+  }
+  .tab{
+    position:absolute;
+    top:-13px;left:16px;
+    background:var(--ink);
+    color:var(--paper);
+    font-family:'Courier Prime',monospace;
+    font-size:11px;
+    letter-spacing:0.1em;
+    padding:4px 10px;
+    border-radius:1px;
+  }
+  .punch-holes{position:absolute;left:6px;top:0;bottom:0;width:8px;display:flex;flex-direction:column;justify-content:space-evenly;padding:14px 0;}
+  .punch-holes span{width:6px;height:6px;border-radius:50%;background:var(--paper);border:1px solid var(--line);}
+  .ficha-body{margin-left:14px;margin-top:8px;}
+  .field-label{
+    font-family:'Courier Prime',monospace;
+    font-size:10px;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+    margin:14px 0 4px;
+  }
+  .field-label:first-child{margin-top:0;}
+  .field-text{
+    font-size:14px;
+    line-height:1.5;
+    margin:0;
+    white-space:pre-wrap;
+  }
+  .tag-list{display:flex;flex-wrap:wrap;gap:6px;margin:0;padding:0;list-style:none;}
+  .tag-list li{
+    font-family:'Courier Prime',monospace;
+    font-size:11px;
+    color:var(--stamp);
+    border:1px solid var(--stamp);
+    border-radius:10px;
+    padding:2px 8px;
+  }
+  .copy-btn{
+    margin-top:14px;
+    background:none;
+    border:1px solid var(--line);
+    border-radius:2px;
+    font-family:'Inter',sans-serif;
+    font-size:12px;
+    padding:6px 12px;
+    cursor:pointer;
+    color:var(--ink-soft);
+    width:100%;
+  }
+  .copy-btn:hover{border-color:var(--ink);color:var(--ink);}
+  .copy-btn.copied{color:var(--gold);border-color:var(--gold);}
+
+  footer{margin-top:36px;font-size:12px;color:var(--ink-soft);text-align:center;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <p class="eyebrow">Nº 001 — arquivo de legendas</p>
+    <h1>Ficha de Legenda</h1>
+    <p class="sub">Envie uma foto e receba a ficha pronta: legenda e hashtags para o Instagram, título e palavras-chave de SEO para o Pinterest.</p>
+  </header>
+
+  <div class="panel">
+    <div class="panel-inner">
+      <label for="apiKey">Chave da API do Gemini</label>
+      <div class="key-row">
+        <input type="password" id="apiKey" placeholder="Cole sua chave aqui" autocomplete="off">
+        <button class="toggle-key" id="toggleKey" type="button">mostrar</button>
+      </div>
+      <p class="hint">A chave só fica na memória desta página — não é salva em nenhum lugar. Gere a sua em <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a>.</p>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-inner">
+      <label>Imagem</label>
+      <div class="dropzone" id="dropzone">
+        <span class="mark tl"></span><span class="mark tr"></span><span class="mark bl"></span><span class="mark br"></span>
+        <p class="dz-title">Arraste a foto aqui</p>
+        <p class="dz-sub">ou clique para escolher do celular ou do computador</p>
+      </div>
+      <input type="file" id="fileInput" accept="image/*">
+      <div class="preview-wrap" id="previewWrap">
+        <img id="previewImg" alt="Pré-visualização">
+        <span class="fname" id="fname"></span>
+        <button class="remove-btn" id="removeBtn" type="button">remover</button>
+      </div>
+
+      <button class="go-btn" id="goBtn" disabled>Analisar e gerar legendas</button>
+      <p class="status" id="status">analisando a imagem…</p>
+      <p class="error" id="error"></p>
+    </div>
+  </div>
+
+  <div class="results" id="results">
+    <div class="card-grid">
+      <div class="ficha">
+        <span class="tab">INSTAGRAM</span>
+        <div class="punch-holes"><span></span><span></span><span></span></div>
+        <div class="ficha-body">
+          <p class="field-label">Legenda</p>
+          <p class="field-text" id="igCaption"></p>
+          <p class="field-label">Hashtags</p>
+          <ul class="tag-list" id="igTags"></ul>
+          <button class="copy-btn" data-copy="ig">copiar legenda + hashtags</button>
+        </div>
+      </div>
+      <div class="ficha">
+        <span class="tab">PINTEREST</span>
+        <div class="punch-holes"><span></span><span></span><span></span></div>
+        <div class="ficha-body">
+          <p class="field-label">Título</p>
+          <p class="field-text" id="pinTitle"></p>
+          <p class="field-label">Descrição (SEO)</p>
+          <p class="field-text" id="pinDesc"></p>
+          <p class="field-label">Palavras-chave</p>
+          <ul class="tag-list" id="pinKeywords"></ul>
+          <button class="copy-btn" data-copy="pin">copiar título + descrição + palavras-chave</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>feito para funcionar como um arquivo único — pode hospedar onde quiser.</footer>
+</div>
+
+<script>
+const dropzone = document.getElementById('dropzone');
+const fileInput = document.getElementById('fileInput');
+const previewWrap = document.getElementById('previewWrap');
+const previewImg = document.getElementById('previewImg');
+const fname = document.getElementById('fname');
+const removeBtn = document.getElementById('removeBtn');
+const goBtn = document.getElementById('goBtn');
+const statusEl = document.getElementById('status');
+const errorEl = document.getElementById('error');
+const resultsEl = document.getElementById('results');
+const apiKeyInput = document.getElementById('apiKey');
+const toggleKeyBtn = document.getElementById('toggleKey');
+
+let selectedFile = null;
+
+toggleKeyBtn.addEventListener('click', () => {
+  const isPw = apiKeyInput.type === 'password';
+  apiKeyInput.type = isPw ? 'text' : 'password';
+  toggleKeyBtn.textContent = isPw ? 'ocultar' : 'mostrar';
+});
+
+dropzone.addEventListener('click', () => fileInput.click());
+dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('drag'); });
+dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag'));
+dropzone.addEventListener('drop', (e) => {
+  e.preventDefault();
+  dropzone.classList.remove('drag');
+  if (e.dataTransfer.files && e.dataTransfer.files[0]) setFile(e.dataTransfer.files[0]);
+});
+fileInput.addEventListener('change', (e) => {
+  if (e.target.files && e.target.files[0]) setFile(e.target.files[0]);
+});
+removeBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  selectedFile = null;
+  fileInput.value = '';
+  previewWrap.style.display = 'none';
+  dropzone.style.display = 'block';
+  goBtn.disabled = true;
+  resultsEl.classList.remove('show');
+});
+
+function setFile(file) {
+  if (!file.type.startsWith('image/')) {
+    showError('Esse arquivo não é uma imagem. Escolha uma foto em jpg, png ou webp.');
+    return;
+  }
+  selectedFile = file;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    previewImg.src = e.target.result;
+    fname.textContent = file.name;
+    previewWrap.style.display = 'flex';
+    dropzone.style.display = 'none';
+    goBtn.disabled = false;
+    hideError();
+  };
+  reader.readAsDataURL(file);
+}
+
+function showError(msg) {
+  errorEl.textContent = msg;
+  errorEl.classList.add('show');
+}
+function hideError() {
+  errorEl.classList.remove('show');
+  errorEl.textContent = '';
+}
+function setStatus(msg) {
+  if (!msg) { statusEl.classList.remove('show'); return; }
+  statusEl.textContent = msg;
+  statusEl.classList.add('show');
+}
+
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result.split(',')[1]);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+const responseSchema = {
+  type: "OBJECT",
+  properties: {
+    instagram_caption: { type: "STRING" },
+    instagram_hashtags: { type: "ARRAY", items: { type: "STRING" } },
+    pinterest_title: { type: "STRING" },
+    pinterest_description: { type: "STRING" },
+    pinterest_keywords: { type: "ARRAY", items: { type: "STRING" } }
+  },
+  required: ["instagram_caption","instagram_hashtags","pinterest_title","pinterest_description","pinterest_keywords"]
+};
+
+const PROMPT = `Você é especialista em social media e SEO para imagens. Observe a imagem enviada e gere conteúdo em português do Brasil, pronto para publicar.
+
+Retorne:
+- instagram_caption: uma legenda envolvente para Instagram (2 a 4 frases, tom natural, pode usar 1 emoji no máximo), sem incluir as hashtags dentro do texto.
+- instagram_hashtags: lista de 12 a 18 hashtags relevantes para a imagem (misture hashtags amplas e de nicho), cada uma já com o símbolo #, sem espaços.
+- pinterest_title: título curto e otimizado para busca no Pinterest (até 100 caracteres), com a palavra-chave principal no início.
+- pinterest_description: descrição para Pinterest otimizada para SEO (200 a 500 caracteres), incluindo palavras-chave relevantes de forma natural, sem hashtags.
+- pinterest_keywords: lista de 8 a 12 palavras-chave/frases de busca relevantes para a imagem, sem #.
+
+Baseie tudo no que você realmente vê na imagem: objetos, cores, cenário, estilo e possível uso do item ou tema retratado.`;
+
+async function analyzeImage() {
+  const apiKey = apiKeyInput.value.trim();
+  if (!apiKey) { showError('Cole sua chave da API do Gemini antes de analisar.'); return; }
+  if (!selectedFile) { showError('Escolha uma imagem primeiro.'); return; }
+
+  hideError();
+  goBtn.disabled = true;
+  resultsEl.classList.remove('show');
+  setStatus('lendo a imagem…');
+
+  try {
+    const base64 = await fileToBase64(selectedFile);
+    setStatus('enviando para análise…');
+
+    const body = {
+      contents: [{
+        parts: [
+          { text: PROMPT },
+          { inline_data: { mime_type: selectedFile.type, data: base64 } }
+        ]
+      }],
+      generationConfig: {
+        responseMimeType: "application/json",
+        responseSchema: responseSchema
+      }
+    };
+
+    const resp = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-goog-api-key': apiKey
+      },
+      body: JSON.stringify(body)
+    });
+
+    if (!resp.ok) {
+      const errBody = await resp.text();
+      let detail = '';
+      try { detail = JSON.parse(errBody).error?.message || ''; } catch(_) {}
+      if (resp.status === 400 || resp.status === 403) {
+        throw new Error('Chave da API recusada. Confira se ela foi colada corretamente.' + (detail ? ' (' + detail + ')' : ''));
+      }
+      throw new Error('O Gemini não conseguiu processar a imagem.' + (detail ? ' Detalhe: ' + detail : ''));
+    }
+
+    const data = await resp.json();
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!text) throw new Error('A resposta veio vazia. Tente novamente.');
+
+    const parsed = JSON.parse(text);
+    renderResults(parsed);
+    setStatus('');
+  } catch (err) {
+    setStatus('');
+    showError(err.message || 'Algo deu errado ao analisar a imagem.');
+  } finally {
+    goBtn.disabled = false;
+  }
+}
+
+let lastResult = null;
+
+function renderResults(r) {
+  lastResult = r;
+  document.getElementById('igCaption').textContent = r.instagram_caption || '';
+  const igTags = document.getElementById('igTags');
+  igTags.innerHTML = '';
+  (r.instagram_hashtags || []).forEach(tag => {
+    const li = document.createElement('li');
+    li.textContent = tag;
+    igTags.appendChild(li);
+  });
+
+  document.getElementById('pinTitle').textContent = r.pinterest_title || '';
+  document.getElementById('pinDesc').textContent = r.pinterest_description || '';
+  const pinKw = document.getElementById('pinKeywords');
+  pinKw.innerHTML = '';
+  (r.pinterest_keywords || []).forEach(kw => {
+    const li = document.createElement('li');
+    li.textContent = kw;
+    pinKw.appendChild(li);
+  });
+
+  resultsEl.classList.add('show');
+}
+
+document.querySelectorAll('.copy-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    if (!lastResult) return;
+    let text = '';
+    if (btn.dataset.copy === 'ig') {
+      text = `${lastResult.instagram_caption}\n\n${(lastResult.instagram_hashtags || []).join(' ')}`;
+    } else {
+      text = `${lastResult.pinterest_title}\n\n${lastResult.pinterest_description}\n\n${(lastResult.pinterest_keywords || []).join(', ')}`;
+    }
+    navigator.clipboard.writeText(text).then(() => {
+      const original = btn.textContent;
+      btn.textContent = 'copiado ✓';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = original; btn.classList.remove('copied'); }, 1800);
+    });
+  });
+});
+
+goBtn.addEventListener('click', analyzeImage);
+</script>
+</body>
+</html>
